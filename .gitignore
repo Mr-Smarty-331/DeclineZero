@@ -34,6 +34,10 @@ WORKFLOW.md
 .agents/
 .gemini/
 
+# Test data artifacts (synthetic temporary test files)
+**/simulator/data/test_*.csv
+**/simulator/data/test_*.parquet
+
 # OS & Editor
 .DS_Store
 Thumbs.db

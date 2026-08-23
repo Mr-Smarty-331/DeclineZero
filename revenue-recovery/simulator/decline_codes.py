@@ -1,7 +1,7 @@
 """
-Core Decline-Code Taxonomy for Razorpay Track 03: AI Revenue Recovery.
+Core Decline-Code Taxonomy & Ambiguous Legacy Codes for Razorpay Track 03: AI Revenue Recovery.
 
-Strict taxonomy of real NPCI / Razorpay decline codes across payment failure modes:
+1. Verified NPCI / Razorpay decline codes:
 - UPI:
   - U69: Collect request expired (timing / customer inattention)
   - Z9: Insufficient funds in customer account
@@ -13,6 +13,9 @@ Strict taxonomy of real NPCI / Razorpay decline codes across payment failure mod
 - Receivables:
   - overdue_no_dispute: Invoice past due date with no dispute flag
   - overdue_with_dispute_flag: Invoice past due date with active dispute
+
+2. Ambiguous / Legacy Codes (Conformal Prediction calibration set):
+- Fictional placeholder error strings simulating noisy cooperative-bank legacy responses.
 """
 from enum import Enum
 
@@ -36,7 +39,15 @@ class ReceivableDeclineCode(str, Enum):
     OVERDUE_NO_DISPUTE = "overdue_no_dispute"
     OVERDUE_WITH_DISPUTE_FLAG = "overdue_with_dispute_flag"
 
-# Grouped categories for deterministic routing & verification
+class RootCauseCategory(str, Enum):
+    TIMING_ATTENTION = "TIMING_ATTENTION"
+    INSUFFICIENT_FUNDS = "INSUFFICIENT_FUNDS"
+    BANK_TECHNICAL_ISSUE = "BANK_TECHNICAL_ISSUE"
+    RISK_FLAGGED = "RISK_FLAGGED"
+    MANDATE_LAPSED = "MANDATE_LAPSED"
+    OVERDUE_INVOICE = "OVERDUE_INVOICE"
+
+# Grouped verified categories
 RISK_FLAGGED_CODES = frozenset({"U16", "34", "59", "K1", "S1", "S2", "S3"})
 
 UPI_CODES = frozenset(code.value for code in UPIDeclineCode)
@@ -44,3 +55,21 @@ SUBSCRIPTION_CODES = frozenset(code.value for code in SubscriptionDeclineCode)
 RECEIVABLE_CODES = frozenset(code.value for code in ReceivableDeclineCode)
 
 ALL_VALID_CODES = UPI_CODES | SUBSCRIPTION_CODES | RECEIVABLE_CODES
+
+# --------------------------------------------------------------------------------------
+# FICTIONAL / SYNTHETIC PLACEHOLDERS: Unmapped cooperative-bank legacy error strings.
+# Explicit note: These are NOT real NPCI/Razorpay decline codes. They exist solely as
+# synthetic out-of-distribution / noisy residuals to evaluate Conformal Prediction abstention.
+# --------------------------------------------------------------------------------------
+LEGACY_AMBIGUOUS_CODES = [
+    "ERR-BNK-0001",  # Legacy host timeout
+    "ERR-BNK-0002",  # Unmapped core banking response 91
+    "ERR-BNK-0003",  # Switch communication failure 06
+    "ERR-BNK-0004",  # Undefined debit exception
+    "ERR-BNK-0005",  # Generic balance check abort
+    "ERR-BNK-0006",  # Regional co-op gateway reset
+    "ERR-BNK-0007",  # Unknown settlement state
+    "ERR-BNK-0008",  # Inactive terminal mapping
+    "ERR-BNK-0009",  # Format parsing failure at acquirer
+    "ERR-BNK-0010",  # Security module integrity warning
+]
