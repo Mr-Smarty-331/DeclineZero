@@ -146,6 +146,124 @@ def load_baseline_comparison():
 
 
 # -----------------------------------------------------------------------------
+# API Helper Functions for Audit Trail (Exercising Real Backend API)
+# -----------------------------------------------------------------------------
+API_URL = os.getenv("API_URL", "http://api:8000" if "postgres:5432" in DATABASE_URL else "http://localhost:8000")
+import requests
+
+
+def fetch_recent_transaction_ids(limit: int = 30):
+    """
+    Fetches the 30 most recently active distinct transaction IDs.
+    """
+    conn = get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT transaction_id, MAX(seq_id) as max_seq
+                FROM audit_logs
+                GROUP BY transaction_id
+                ORDER BY max_seq DESC
+                LIMIT %s;
+            """, (limit,))
+            return [row[0] for row in cur.fetchall()]
+    except Exception:
+        return []
+
+
+def fetch_timeline_from_api(transaction_id: str):
+    """
+    Calls GET /v1/audit/{transaction_id} via HTTP API.
+    """
+    try:
+        try:
+            resp = requests.get(f"{API_URL}/v1/audit/{transaction_id}", timeout=5.0)
+        except Exception:
+            resp = requests.get(f"http://localhost:8000/v1/audit/{transaction_id}", timeout=5.0)
+            
+        if resp.status_code == 200:
+            return resp.json()
+        elif resp.status_code == 404:
+            return {"error": f"Transaction '{transaction_id}' not found in audit logs."}
+        else:
+            return {"error": f"API Error ({resp.status_code}): {resp.text}"}
+    except Exception as e:
+        return {"error": f"Could not reach Audit API: {e}"}
+
+
+def verify_proof_from_api(transaction_id: str):
+    """
+    Calls GET /v1/audit/{transaction_id}/verify-proof via HTTP API.
+    """
+    try:
+        try:
+            resp = requests.get(f"{API_URL}/v1/audit/{transaction_id}/verify-proof", timeout=15.0)
+        except Exception:
+            resp = requests.get(f"http://localhost:8000/v1/audit/{transaction_id}/verify-proof", timeout=15.0)
+            
+        if resp.status_code == 200:
+            return resp.json()
+        elif resp.status_code == 404:
+            return {"error": f"Transaction '{transaction_id}' not found."}
+        else:
+            return {"error": f"API Error ({resp.status_code}): {resp.text}"}
+    except Exception as e:
+        return {"error": f"Could not reach Proof API: {e}"}
+
+
+def execute_demo_tamper(transaction_id: str, new_action: str = "MALICIOUS_UNAUTHORIZED_OVERRIDE"):
+    """
+    Deliberately corrupts an audit log action_taken field in Postgres for live hackathon demonstration.
+    """
+    conn = get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE audit_logs
+                SET action_taken = %s
+                WHERE transaction_id = %s
+                AND seq_id = (SELECT MIN(seq_id) FROM audit_logs WHERE transaction_id = %s);
+            """, (new_action, transaction_id, transaction_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        conn.rollback()
+        st.error(f"Tamper query error: {e}")
+        return False
+
+
+def execute_demo_restore(transaction_id: str, original_action: str = "NONE"):
+    """
+    Restores the original database value for the selected transaction.
+    """
+    conn = get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT from_state, to_state FROM audit_logs
+                WHERE transaction_id = %s
+                AND seq_id = (SELECT MIN(seq_id) FROM audit_logs WHERE transaction_id = %s);
+            """, (transaction_id, transaction_id))
+            row = cur.fetchone()
+            act = "NONE"
+            if row and row[1] == "triaged":
+                act = "triage_dispatch"
+            cur.execute("""
+                UPDATE audit_logs
+                SET action_taken = %s
+                WHERE transaction_id = %s
+                AND seq_id = (SELECT MIN(seq_id) FROM audit_logs WHERE transaction_id = %s);
+            """, (act, transaction_id, transaction_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        conn.rollback()
+        st.error(f"Restore query error: {e}")
+        return False
+
+
+
+# -----------------------------------------------------------------------------
 # Main Application Structure
 # -----------------------------------------------------------------------------
 st.title("⚡ DeclineZero — Closed-Loop AI Revenue Recovery")
@@ -337,122 +455,7 @@ elif selected_page == "📊 4-Way Batch Analytics":
         st.warning("Baseline comparison dataset not found at results/baseline_comparison.json. Run Phase 8b evaluator to generate.")
 
 
-# -----------------------------------------------------------------------------
-# API Helper Functions for Audit Trail (Exercising Real Backend API)
-# -----------------------------------------------------------------------------
-API_URL = os.getenv("API_URL", "http://api:8000" if "postgres:5432" in DATABASE_URL else "http://localhost:8000")
-import requests
 
-
-def fetch_recent_transaction_ids(limit: int = 30):
-    """
-    Fetches the 30 most recently active distinct transaction IDs.
-    """
-    conn = get_db_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT transaction_id, MAX(seq_id) as max_seq
-                FROM audit_logs
-                GROUP BY transaction_id
-                ORDER BY max_seq DESC
-                LIMIT %s;
-            """, (limit,))
-            return [row[0] for row in cur.fetchall()]
-    except Exception:
-        return []
-
-
-def fetch_timeline_from_api(transaction_id: str):
-    """
-    Calls GET /v1/audit/{transaction_id} via HTTP API.
-    """
-    try:
-        # Try configured API_URL first, fallback to localhost if outside container
-        try:
-            resp = requests.get(f"{API_URL}/v1/audit/{transaction_id}", timeout=5.0)
-        except Exception:
-            resp = requests.get(f"http://localhost:8000/v1/audit/{transaction_id}", timeout=5.0)
-            
-        if resp.status_code == 200:
-            return resp.json()
-        elif resp.status_code == 404:
-            return {"error": f"Transaction '{transaction_id}' not found in audit logs."}
-        else:
-            return {"error": f"API Error ({resp.status_code}): {resp.text}"}
-    except Exception as e:
-        return {"error": f"Could not reach Audit API: {e}"}
-
-
-def verify_proof_from_api(transaction_id: str):
-    """
-    Calls GET /v1/audit/{transaction_id}/verify-proof via HTTP API.
-    """
-    try:
-        try:
-            resp = requests.get(f"{API_URL}/v1/audit/{transaction_id}/verify-proof", timeout=15.0)
-        except Exception:
-            resp = requests.get(f"http://localhost:8000/v1/audit/{transaction_id}/verify-proof", timeout=15.0)
-            
-        if resp.status_code == 200:
-            return resp.json()
-        elif resp.status_code == 404:
-            return {"error": f"Transaction '{transaction_id}' not found."}
-        else:
-            return {"error": f"API Error ({resp.status_code}): {resp.text}"}
-    except Exception as e:
-        return {"error": f"Could not reach Proof API: {e}"}
-
-
-def execute_demo_tamper(transaction_id: str, new_action: str = "MALICIOUS_UNAUTHORIZED_OVERRIDE"):
-    """
-    Deliberately corrupts an audit log action_taken field in Postgres for live hackathon demonstration.
-    """
-    conn = get_db_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                UPDATE audit_logs
-                SET action_taken = %s
-                WHERE transaction_id = %s
-                AND seq_id = (SELECT MIN(seq_id) FROM audit_logs WHERE transaction_id = %s);
-            """, (new_action, transaction_id, transaction_id))
-        conn.commit()
-        return True
-    except Exception as e:
-        conn.rollback()
-        st.error(f"Tamper query error: {e}")
-        return False
-
-
-def execute_demo_restore(transaction_id: str, original_action: str = "NONE"):
-    """
-    Restores the original database value for the selected transaction.
-    """
-    conn = get_db_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT from_state, to_state FROM audit_logs
-                WHERE transaction_id = %s
-                AND seq_id = (SELECT MIN(seq_id) FROM audit_logs WHERE transaction_id = %s);
-            """, (transaction_id, transaction_id))
-            row = cur.fetchone()
-            act = "NONE"
-            if row and row[1] == "triaged":
-                act = "triage_dispatch"
-            cur.execute("""
-                UPDATE audit_logs
-                SET action_taken = %s
-                WHERE transaction_id = %s
-                AND seq_id = (SELECT MIN(seq_id) FROM audit_logs WHERE transaction_id = %s);
-            """, (act, transaction_id, transaction_id))
-        conn.commit()
-        return True
-    except Exception as e:
-        conn.rollback()
-        st.error(f"Restore query error: {e}")
-        return False
 
 
 # =============================================================================
