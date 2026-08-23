@@ -47,3 +47,5 @@ Thumbs.db
 # Data & Docker storage
 pgdata/
 *.log
+scratch/
+**/scratch/

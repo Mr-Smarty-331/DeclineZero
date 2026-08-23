@@ -121,4 +121,4 @@ docker compose exec api python tests/test_postfix_validation.py
 
 ## 📜 Full Assumptions & Model Registry
 
-All model constants, heuristics, and unit economics are documented in [`ASSUMPTIONS.md`](file:///Users/ayushraj/Desktop/projects/Razorpay/revenue-recovery/ASSUMPTIONS.md).
+All model constants, heuristics, and unit economics are documented in [`revenue-recovery/ASSUMPTIONS.md`](file:///Users/ayushraj/Desktop/projects/Razorpay/revenue-recovery/ASSUMPTIONS.md).

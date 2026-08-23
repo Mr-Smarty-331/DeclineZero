@@ -55,6 +55,7 @@ def init_audit_db():
             # 2. Audit logs append-only ledger
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS audit_logs (
+                    seq_id BIGSERIAL,
                     id UUID PRIMARY KEY,
                     transaction_id VARCHAR(128) NOT NULL,
                     from_state VARCHAR(64),
@@ -69,8 +70,10 @@ def init_audit_db():
                     chain_hash VARCHAR(64) NOT NULL,
                     timestamp TIMESTAMP WITH TIME ZONE NOT NULL
                 );
+                ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS seq_id BIGSERIAL;
                 CREATE INDEX IF NOT EXISTS idx_audit_txn ON audit_logs(transaction_id);
                 CREATE INDEX IF NOT EXISTS idx_audit_time ON audit_logs(timestamp);
+                CREATE INDEX IF NOT EXISTS idx_audit_seq ON audit_logs(seq_id);
             """)
         conn.commit()
     finally:

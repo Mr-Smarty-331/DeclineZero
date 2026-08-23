@@ -1,0 +1,56 @@
+{
+  "post_fix_validation": true,
+  "historical_risk_violations_in_audit_logs": 0,
+  "seeds": [
+    {
+      "seed": 42,
+      "run_tag": "pf42_225e",
+      "net_recovered_inr": 158667176.65,
+      "gross_recovered_inr": 158670006.65,
+      "recovery_rate_pct": 55.28,
+      "risk_escalations_isolated": 553,
+      "compliance_sweep": {
+        "risk_flagged_dispatched_violations": 0,
+        "out_of_window_violations": 0,
+        "retry_cap_violations": 0,
+        "distress_leaks": 0,
+        "correctly_escalated_human_review": 0
+      }
+    },
+    {
+      "seed": 7,
+      "run_tag": "pf7_8357",
+      "net_recovered_inr": 154364726.49,
+      "gross_recovered_inr": 154367513.49,
+      "recovery_rate_pct": 54.36,
+      "risk_escalations_isolated": 568,
+      "compliance_sweep": {
+        "risk_flagged_dispatched_violations": 0,
+        "out_of_window_violations": 0,
+        "retry_cap_violations": 0,
+        "distress_leaks": 0,
+        "correctly_escalated_human_review": 0
+      }
+    },
+    {
+      "seed": 99,
+      "run_tag": "pf99_0d31",
+      "net_recovered_inr": 149493361.23,
+      "gross_recovered_inr": 149496123.73,
+      "recovery_rate_pct": 53.73,
+      "risk_escalations_isolated": 542,
+      "compliance_sweep": {
+        "risk_flagged_dispatched_violations": 0,
+        "out_of_window_violations": 0,
+        "retry_cap_violations": 0,
+        "distress_leaks": 0,
+        "correctly_escalated_human_review": 0
+      }
+    }
+  ],
+  "headline_seed42_net_inr": 158667176.65,
+  "range_min_net_inr": 149493361.23,
+  "range_max_net_inr": 158667176.65,
+  "range_mean_net_inr": 154175088.12333333,
+  "all_post_fix_compliance_clean": true
+}

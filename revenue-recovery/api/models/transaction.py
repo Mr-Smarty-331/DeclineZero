@@ -126,6 +126,15 @@ class TransactionRecord(BaseModel):
     actually_resolved: Optional[bool] = Field(default=None, description="Final resolution outcome")
     is_ambiguous: bool = Field(default=False, description="Whether decline code is an unmapped legacy string")
 
+    # Optional merchant/customer metadata
+    merchant_id: Optional[str] = "acc_default"
+    customer_id: Optional[str] = None
+    contact: Optional[str] = None
+    email: Optional[str] = None
+    customer_notes: Optional[str] = None
+    is_distressed: bool = False
+    hours_since_failure: float = 0.0
+
     # Hidden ground-truth simulation fields (nullable in real production flows)
     gt_would_self_resolve: Optional[bool] = None
     gt_nudge_effectiveness: Optional[float] = None
@@ -134,3 +143,4 @@ class TransactionRecord(BaseModel):
 
     class Config:
         use_enum_values = True
+        extra = "allow"

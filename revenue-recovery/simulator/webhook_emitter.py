@@ -20,7 +20,7 @@ def transaction_to_razorpay_webhook(txn: Dict[str, Any], event_type: str = None)
     """
     txn_id = str(txn.get("transaction_id", "pay_default"))
     # Sanitize prefix for realistic Razorpay IDs
-    clean_id = txn_id.replace("-", "")[:14]
+    clean_id = txn_id.replace("-", "_")
     pay_id = f"pay_{clean_id}"
     order_id = f"order_{clean_id}"
     sub_id = f"sub_{clean_id}"
@@ -33,7 +33,7 @@ def transaction_to_razorpay_webhook(txn: Dict[str, Any], event_type: str = None)
     
     # ASSUMPTION: Account ID representing the merchant account on Razorpay
     account_id = "acc_RZPMerchantDemo01"
-    created_at = int(time.time()) - (txn.get("hour_of_day", 12) * 3600)
+    created_at = int(txn.get("hour_of_day", 12)) * 3600
 
     # 1. Checkout Payment Failure
     if category == "checkout":
@@ -103,6 +103,11 @@ def transaction_to_razorpay_webhook(txn: Dict[str, Any], event_type: str = None)
                         "acquirer_data": {
                             "rrn": f"RRN{clean_id[:8]}",
                             "upi_transaction_id": f"UPI{clean_id[:10]}" if "upi" in method else None
+                        },
+                        "notes": txn.get("notes") or {
+                            "customer_notes": txn.get("customer_notes", ""),
+                            "is_distressed": txn.get("is_distressed", False),
+                            "customer_past_success_rate": txn.get("customer_past_success_rate", 0.85)
                         },
                         "created_at": created_at
                     }

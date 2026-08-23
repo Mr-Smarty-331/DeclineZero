@@ -54,6 +54,9 @@ services:
     command: streamlit run dashboard/app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
     ports:
       - "8501:8501"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/revenue_recovery
     volumes:
       - .:/app
     depends_on:

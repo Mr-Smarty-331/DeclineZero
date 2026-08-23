@@ -154,7 +154,7 @@ async def verify_audit_proof(transaction_id: str = Path(..., description="Transa
                        diagnosis_raw, action_taken, stopping_rule_triggered, cost_of_action,
                        leaf_hash, chain_hash, timestamp
                 FROM audit_logs
-                ORDER BY timestamp ASC, id ASC;
+                ORDER BY seq_id ASC;
             """)
             rows = cur.fetchall()
 

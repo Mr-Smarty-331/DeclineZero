@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.routes.triage import triage_router
 from api.routes.audit import audit_router
+from api.routes.webhook import webhook_router
 from core.triage_scorer.baseline_model import load_baseline_model
 
 app = FastAPI(
@@ -21,6 +22,7 @@ app.add_middleware(
 # Include routers
 app.include_router(triage_router)
 app.include_router(audit_router, prefix="/v1/audit", tags=["Audit"])
+app.include_router(webhook_router, prefix="/v1/webhook", tags=["Webhook"])
 
 @app.on_event("startup")
 def startup_event():

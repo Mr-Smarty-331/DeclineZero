@@ -213,14 +213,19 @@ def generate_transaction() -> Dict[str, Any]:
     }
 
 
-def generate_batch(n: int = 10000, output_path: Optional[str | Path] = None) -> List[Dict[str, Any]]:
+def generate_batch(n: int = 10000, output_path: Optional[str | Path] = None, seed: Optional[int] = None) -> List[Dict[str, Any]]:
     """
     Generates n transactions and saves them to a CSV file with full counterfactual ground truth.
+    Pass seed (int) for deterministic, reproducible batches (e.g. seed=42, seed=7, seed=99).
     """
+    if seed is not None:
+        random.seed(seed)
+
     target_path = Path(output_path) if output_path else DEFAULT_OUTPUT_PATH
     target_path.parent.mkdir(parents=True, exist_ok=True)
     
     records = [generate_transaction() for _ in range(n)]
+
 
     fieldnames = [
         "transaction_id",

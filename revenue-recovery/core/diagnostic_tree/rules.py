@@ -103,10 +103,16 @@ def diagnose(
     # Structured cryptographic audit logging (Phase 7a)
     try:
         from core.audit_trail.merkle_log import log_transition
+        if root_cause == "RISK_FLAGGED":
+            audit_to_state = "escalated_human_review"
+        elif root_cause == "AMBIGUOUS_ESCALATED":
+            audit_to_state = "ambiguous_escalated"
+        else:
+            audit_to_state = "diagnosed"
         log_transition(
             txn_id=txn_id or "txn_provisional",
             from_state="triaged",
-            to_state="diagnosed" if root_cause != "AMBIGUOUS_ESCALATED" else "ambiguous_escalated",
+            to_state=audit_to_state,
             diagnosis_raw=decision_result,
             action_taken=action,
             stopping_rule_triggered=None

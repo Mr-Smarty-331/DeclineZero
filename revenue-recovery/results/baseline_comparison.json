@@ -1,0 +1,67 @@
+{
+  "generated_at": "2026-08-23T21:05:07.886490+00:00",
+  "total_transactions": 10000,
+  "total_failed_volume_inr": 241908520.5,
+  "assumptions": {
+    "avg_customer_ltv_loss_inr": 3500.0,
+    "avg_compliance_penalty_inr": 5000.0,
+    "unit_outreach_cost_inr": 0.5
+  },
+  "policies": {
+    "do_nothing": {
+      "name": "Do Nothing (Status Quo)",
+      "recovered_amount_inr": 0.0,
+      "recovery_rate_pct": 0.0,
+      "recovered_transactions_count": 0,
+      "total_outreach_cost_inr": 0.0,
+      "monetized_churn_cost_inr": 0.0,
+      "regulatory_penalty_cost_inr": 0.0,
+      "net_recovered_inr": 0.0,
+      "compliance_violations": 0,
+      "customer_churn_incidents": 0
+    },
+    "blind_retry": {
+      "name": "Blind Retry-Everything (Naive Static)",
+      "recovered_amount_inr": 35407908.05,
+      "recovery_rate_pct": 40.88,
+      "recovered_transactions_count": 4088,
+      "total_outreach_cost_inr": 5000.0,
+      "monetized_churn_cost_inr": 847000.0,
+      "regulatory_penalty_cost_inr": 20895000.0,
+      "net_recovered_inr": 13660908.05,
+      "compliance_violations": 4179,
+      "customer_churn_incidents": 242,
+      "risk_auto_retries": 541,
+      "night_contacts": 3396
+    },
+    "rules_only_no_uplift": {
+      "name": "Heuristic Rules (No Causal Uplift / No Conformal)",
+      "recovered_amount_inr": 31373425.48,
+      "recovery_rate_pct": 47.76,
+      "recovered_transactions_count": 4776,
+      "total_outreach_cost_inr": 3128.5,
+      "monetized_churn_cost_inr": 549500.0,
+      "regulatory_penalty_cost_inr": 785000.0,
+      "net_recovered_inr": 30035796.98,
+      "compliance_violations": 157,
+      "customer_churn_incidents": 157,
+      "risk_auto_retries": 0,
+      "night_contacts": 0
+    },
+    "decline_zero": {
+      "name": "DeclineZero (Full Autonomous Pipeline)",
+      "recovered_amount_inr": 149496123.73,
+      "recovery_rate_pct": 53.73,
+      "recovered_transactions_count": 5373,
+      "total_outreach_cost_inr": 2762.5,
+      "monetized_churn_cost_inr": 0.0,
+      "regulatory_penalty_cost_inr": 0.0,
+      "net_recovered_inr": 149493361.23,
+      "compliance_violations": 0,
+      "customer_churn_incidents": 0,
+      "wasted_contacts_prevented": 4072,
+      "risk_escalations_isolated": 542,
+      "conformal_abstentions": 761
+    }
+  }
+}
