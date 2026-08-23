@@ -1,0 +1,3 @@
+# Revenue Recovery Agent (Razorpay Track 03: AI Revenue Recovery)
+
+An autonomous, bounded payment-recovery agent designed to detect revenue at risk across checkout abandonment, subscription failures, bank-technical declines, and overdue receivables. The agent implements a closed-loop pipeline (**Triage** via Uplift CATE $\rightarrow$ **Diagnose** via deterministic decline codes & conformal abstention $\rightarrow$ **Intervene** via root-cause matched Razorpay payment links $\rightarrow$ **Stop** via precomputed CMDP policies & non-negotiable RBI compliance rules $\rightarrow$ **Audit** via SHA-256 Merkle hash-chained ledger) delivering measured revenue recovery without blind retries or customer harassment.
