@@ -73,6 +73,20 @@ def execute_recovery_action(
         if curr_st != target_state.value:
             transition_state(txn_id, target_state)
         
+        # Cryptographic Audit Log (Phase 7a)
+        try:
+            from core.audit_trail.merkle_log import log_transition
+            log_transition(
+                txn_id=txn_id,
+                from_state=curr_st or "diagnosed",
+                to_state=target_state.value,
+                action_taken="stop",
+                stopping_rule_triggered=reason,
+                cost_of_action=0.0
+            )
+        except Exception as e:
+            logger.warning(f"AUDIT_LOG_EXCEPTION: Failed to record stopping audit log: {e}")
+
         return {
             "success": False,
             "dispatched": False,
@@ -104,6 +118,20 @@ def execute_recovery_action(
         final_state = TransactionState.ACTION_SENT
         if blob.get("state") != final_state.value:
             transition_state(txn_id, final_state)
+
+    # Cryptographic Audit Log for Outreach Action (Phase 7a)
+    try:
+        from core.audit_trail.merkle_log import log_transition
+        log_transition(
+            txn_id=txn_id,
+            from_state="diagnosed",
+            to_state=final_state.value,
+            action_taken=action,
+            stopping_rule_triggered=None,
+            cost_of_action=float(dispatch_res.get("cost", 0.0))
+        )
+    except Exception as e:
+        logger.warning(f"AUDIT_LOG_EXCEPTION: Failed to record action dispatch audit log: {e}")
 
     logger.info(f"TASK_COMPLETE: txn_id={txn_id}, action={action}, final_state={final_state.value}")
     return {

@@ -68,6 +68,21 @@ async def triage_transaction(record: TransactionRecord):
             # Remains at TRIAGED ready for Phase 4 diagnosis
             final_state = TransactionState.TRIAGED.value
 
+        # Cryptographic Audit Log for Triage (Phase 7a)
+        try:
+            from core.audit_trail.merkle_log import log_transition
+            log_transition(
+                txn_id=txn_id,
+                from_state="received",
+                to_state=final_state,
+                priority_score=priority_score,
+                cate_score=cate_score,
+                action_taken=f"triage_{decision.lower()}"
+            )
+        except Exception as e:
+            # Non-blocking log warning
+            pass
+
         return TriageResponse(
             transaction_id=txn_id,
             priority_score=priority_score,

@@ -100,19 +100,18 @@ def diagnose(
         "conformal": conformal_info
     }
 
-    # Structured audit logging
-    # TODO: replace with Merkle audit in Phase 7
-    logger.info(
-        "DIAGNOSIS_EVENT",
-        extra={
-            "txn_id": txn_id,
-            "decline_code": code_str,
-            "category": cat_str,
-            "root_cause": root_cause,
-            "action": action,
-            "rule": rule_name,
-            "latency_ms": latency_ms
-        }
-    )
+    # Structured cryptographic audit logging (Phase 7a)
+    try:
+        from core.audit_trail.merkle_log import log_transition
+        log_transition(
+            txn_id=txn_id or "txn_provisional",
+            from_state="triaged",
+            to_state="diagnosed" if root_cause != "AMBIGUOUS_ESCALATED" else "ambiguous_escalated",
+            diagnosis_raw=decision_result,
+            action_taken=action,
+            stopping_rule_triggered=None
+        )
+    except Exception as e:
+        logger.warning(f"AUDIT_LOG_EXCEPTION: Failed to record audit log: {e}")
 
     return decision_result
