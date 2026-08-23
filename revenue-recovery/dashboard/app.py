@@ -151,12 +151,20 @@ def load_baseline_comparison():
 st.title("⚡ DeclineZero — Closed-Loop AI Revenue Recovery")
 st.caption("Razorpay Autonomous Decisioning Engine • Non-Intrusive Causal Triage • Conformal Safeguards • Merkle Audit Trail")
 
-tabs = st.tabs(["⚡ Live Recovery Monitor", "📊 4-Way Batch Analytics", "🔍 Cryptographic Audit Explorer"])
+# Navigation bar (Horizontal stateful navigation)
+selected_page = st.radio(
+    "Navigation",
+    ["⚡ Live Recovery Monitor", "📊 4-Way Batch Analytics", "🔍 Cryptographic Audit Explorer"],
+    horizontal=True,
+    label_visibility="collapsed"
+)
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 # =============================================================================
-# TAB 1: LIVE RECOVERY MONITOR
+# VIEW 1: LIVE RECOVERY MONITOR
 # =============================================================================
-with tabs[0]:
+if selected_page == "⚡ Live Recovery Monitor":
     col_ctrl1, col_ctrl2 = st.columns([8, 2])
     with col_ctrl1:
         st.markdown("### Real-Time Recovery Stream")
@@ -236,18 +244,18 @@ with tabs[0]:
 
 
 # =============================================================================
-# TAB 2: 4-WAY BATCH ANALYTICS
+# VIEW 2: 4-WAY BATCH ANALYTICS
 # =============================================================================
-with tabs[1]:
+elif selected_page == "📊 4-Way Batch Analytics":
     st.markdown("### Comparative Economic Benchmark (10,000-Transaction Scale)")
     
-    # 3-Seed Variance Range Banner
+    # 3-Seed Variance Range Banner (Post-Fix Reconciled)
     st.markdown("""
     <div class="variance-banner">
         <b>🎯 Validated Headline Economic Delivery (3-Seed Robust Range):</b><br>
-        <span style="font-size: 18px; font-weight:700; color: #10b981;">₹157.71M ± ₹5.58M</span> 
-        &nbsp;&nbsp;•&nbsp;&nbsp; <b>Confidence Spread:</b> ₹150.06M – ₹163.22M 
-        &nbsp;&nbsp;•&nbsp;&nbsp; <b>Conversion Rate:</b> 55.52% ± 0.66% across independent batches
+        <span style="font-size: 18px; font-weight:700; color: #10b981;">₹154.18M ± ₹4.59M</span> 
+        &nbsp;&nbsp;•&nbsp;&nbsp; <b>Confidence Spread:</b> ₹149.49M – ₹158.67M 
+        &nbsp;&nbsp;•&nbsp;&nbsp; <b>Conversion Rate:</b> 54.46% ± 0.78% across independent batches
     </div>
     """, unsafe_allow_html=True)
 
@@ -448,9 +456,9 @@ def execute_demo_restore(transaction_id: str, original_action: str = "NONE"):
 
 
 # =============================================================================
-# TAB 3: AUDIT EXPLORER & CRYPTOGRAPHIC PROOF VERIFIER (PHASE 9b)
+# VIEW 3: AUDIT EXPLORER & CRYPTOGRAPHIC PROOF VERIFIER (PHASE 9b)
 # =============================================================================
-with tabs[2]:
+elif selected_page == "🔍 Cryptographic Audit Explorer":
     st.markdown("### 🔍 Cryptographic Audit Explorer & Immutable Merkle Proofs")
     st.caption("Inspect every automated transition step, causal score, root-cause diagnosis, and verify mathematical tamper-evidence from Genesis.")
 
