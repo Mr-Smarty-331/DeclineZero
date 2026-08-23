@@ -1,69 +1,93 @@
 """
-Deterministic Rule-Based Diagnostic Tree for AI Revenue Recovery.
+Deterministic Rule-Based Diagnostic Tree with Conformal Fallback.
 
-Sub-millisecond procedural root-cause diagnosis for verified NPCI/Razorpay decline codes.
-Contains ZERO heuristic ML/LLM calls to guarantee zero hallucination and strict regulatory compliance.
+1. Procedural expert mapping for verified NPCI/Razorpay decline codes (sub-microsecond execution).
+2. Conformal prediction wrapper (α=0.01) for unmapped cooperative bank residuals.
+3. Strict regulatory isolation: RISK_FLAGGED codes and conformal multi-candidate sets strictly escalate to human review.
 """
 import time
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
+
+from api.models.transaction import TransactionRecord
+from core.diagnostic_tree.conformal import conformal_diagnose
 
 logger = logging.getLogger("diagnostic_tree")
 
 
-def diagnose(decline_code: str, category: str, txn_id: Optional[str] = None) -> Dict[str, Any]:
+def diagnose(
+    decline_code: str,
+    category: str,
+    txn_id: Optional[str] = None,
+    record: Optional[Union[Dict[str, Any], TransactionRecord]] = None
+) -> Dict[str, Any]:
     """
-    Evaluates verified decline codes against deterministic expert rules.
-    
-    Returns:
-        {
-            "root_cause": str,
-            "action": str,
-            "latency_ms": float,
-            "decision_path": str
-        }
+    Diagnoses root causes from decline codes using deterministic rules first,
+    falling back cleanly to the conformal prediction layer for unmapped legacy codes.
     """
     t_start = time.perf_counter()
 
     code_str = str(decline_code).strip()
     cat_str = str(category).strip().lower()
 
-    # 1. Unambiguous verified decline codes
+    # 1. Deterministic Rule Tree (Verified NPCI / Razorpay Codes)
     if code_str == "U69":
         root_cause = "TIMING_ATTENTION"
         action = "SEND_FRESH_PAYMENT_LINK_URGENT"
         rule_name = "RULE_UPI_U69_TIMING"
+        conformal_info = None
 
     elif code_str == "Z9":
         root_cause = "INSUFFICIENT_FUNDS"
         action = "SCHEDULE_SALARY_ALIGNED_RETRY"
         rule_name = "RULE_UPI_Z9_FUNDS"
+        conformal_info = None
 
     elif code_str == "U28":
         root_cause = "BANK_TECHNICAL_ISSUE"
         action = "SUGGEST_ALTERNATE_METHOD"
         rule_name = "RULE_UPI_U28_PSP_GLITCH"
+        conformal_info = None
 
     elif code_str in ("U16", "34", "59", "K1", "S1", "S2", "S3"):
         root_cause = "RISK_FLAGGED"
         action = "ESCALATE_HUMAN_REVIEW"
         rule_name = "RULE_SECURITY_RISK_SHIELD"
+        conformal_info = None
 
     elif code_str in ("mandate_expired", "mandate_paused"):
         root_cause = "MANDATE_LAPSED"
         action = "SEND_MANDATE_REVIVAL_LINK"
         rule_name = "RULE_SUBSCRIPTION_MANDATE"
+        conformal_info = None
 
     elif cat_str == "receivable" and code_str in ("overdue_no_dispute", "overdue_with_dispute_flag"):
         root_cause = "OVERDUE_INVOICE"
         action = "SEND_REMINDER_TRACK_PROMISE"
         rule_name = "RULE_RECEIVABLES_OVERDUE"
+        conformal_info = None
 
     else:
-        # Fallback for unmapped cooperative-bank strings (ERR-BNK-*) -> Handed off to Phase 4b Conformal Layer
-        root_cause = "UNRECOGNIZED"
-        action = "SEND_TO_CONFORMAL_CHECK"
-        rule_name = "FALLBACK_TO_CONFORMAL"
+        # 2. Phase 4c Conformal Prediction Layer for Ambiguous Residuals
+        fallback_record = record or {
+            "transaction_id": txn_id or "txn_fallback",
+            "decline_code": code_str,
+            "category": cat_str,
+            "amount": 1000.0,
+            "hour_of_day": 12,
+            "payment_method": "upi"
+        }
+        conformal_res = conformal_diagnose(fallback_record, alpha=0.01)
+        conformal_info = conformal_res
+
+        if conformal_res["status"] == "SINGLETON":
+            root_cause = conformal_res["root_cause"]
+            action = conformal_res["action"]
+            rule_name = "CONFORMAL_SINGLETON_RESOLVED"
+        else:
+            root_cause = "AMBIGUOUS_ESCALATED"
+            action = "ESCALATE_HUMAN_REVIEW"
+            rule_name = "CONFORMAL_ABSTENTION_ESCALATED"
 
     t_end = time.perf_counter()
     latency_ms = (t_end - t_start) * 1000.0
@@ -72,10 +96,11 @@ def diagnose(decline_code: str, category: str, txn_id: Optional[str] = None) -> 
         "root_cause": root_cause,
         "action": action,
         "latency_ms": round(latency_ms, 5),
-        "decision_path": rule_name
+        "decision_path": rule_name,
+        "conformal": conformal_info
     }
 
-    # Structured audit trail logging
+    # Structured audit logging
     # TODO: replace with Merkle audit in Phase 7
     logger.info(
         "DIAGNOSIS_EVENT",
