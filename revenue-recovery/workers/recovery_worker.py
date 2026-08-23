@@ -1,9 +1,9 @@
 """
 Celery Asynchronous Recovery Action Worker.
 
-Executes outbound recovery actions under strict compliance guardrails:
-1. Pre-execution Compliance Gate (8AM-7PM window, daily attempt caps, third-party shield).
-2. Clean State Transitions (STOPPED_BY_CONTACT_WINDOW, STOPPED_BY_RETRY_CAP, ACTION_SENT, ESCALATED_HUMAN_REVIEW).
+Executes outbound recovery actions under strict compliance & CMDP stopping guardrails:
+1. Unified Decision Entry Point (decide_next_action): Hard rule short-circuits (Distress, Window, Caps) + CMDP LTV Churn protection.
+2. Clean State Machine Transitions (STOPPED_BY_EMOTIONAL_DISTRESS, STOPPED_BY_CONTACT_WINDOW, STOPPED_BY_RETRY_CAP, STOPPED_BY_LTV_CHURN, ACTION_SENT, ESCALATED_HUMAN_REVIEW).
 3. Salary-Aligned Retries via apply_async(eta=...).
 """
 import os
@@ -13,7 +13,8 @@ from celery import Celery
 
 from api.models.transaction import TransactionState
 from core.state_store.redis_store import get_state, set_state, transition_state
-from core.stopping_rules.compliance import compliance_gate, next_salary_aligned_slot
+from core.stopping_rules.compliance import next_salary_aligned_slot
+from core.stopping_rules.hard_rules import decide_next_action
 from core.recovery_engine.actions import dispatch_action
 
 logger = logging.getLogger("recovery_worker")
@@ -46,7 +47,7 @@ def execute_recovery_action(
 ) -> Dict[str, Any]:
     """
     Executes a recovery action asynchronously.
-    Evaluates compliance gate first, updating Redis state accordingly.
+    Evaluates hard rules and CMDP stopping policy first, updating Redis state accordingly.
     """
     logger.info(f"TASK_START: txn_id={txn_id}, action={action}, simulated_time={simulated_time}")
 
@@ -55,32 +56,45 @@ def execute_recovery_action(
     if not current_state_blob:
         set_state(txn_id, TransactionState.DIAGNOSED)
 
-    # 1. Evaluate Regulatory Compliance Gate
-    gate_res = compliance_gate(transaction_record, current_time=simulated_time)
+    # ----------------------------------------------------------------------------------
+    # Step 1: Unified Decision Gate (Hard Rules first, then CMDP Stopping Policy)
+    # ----------------------------------------------------------------------------------
+    decision = decide_next_action(transaction_record, current_time=simulated_time)
     
-    if not gate_res["passed"]:
-        target_state = gate_res["target_state"]
-        reason = gate_res["reason"]
-        logger.warning(f"COMPLIANCE_BLOCKED: txn_id={txn_id} blocked by {reason} -> {target_state}")
+    if not decision["allowed"]:
+        target_state = decision["state"]
+        reason = decision["reason"]
+        source = decision["source"]
+        logger.warning(f"STOPPING_GATE_BLOCKED: txn_id={txn_id} blocked by {source} ({reason}) -> {target_state}")
         
-        # State machine transition to terminal stopped state
-        transition_state(txn_id, target_state)
+        # State machine transition to terminal stopped state if not already there
+        blob = get_state(txn_id) or {}
+        curr_st = blob.get("state")
+        if curr_st != target_state.value:
+            transition_state(txn_id, target_state)
         
         return {
             "success": False,
             "dispatched": False,
             "state": target_state.value,
             "reason": reason,
+            "source": source,
             "txn_id": txn_id
         }
 
-    # 2. Execute Recovery Action Dispatch
+    # ----------------------------------------------------------------------------------
+    # Step 2: Execute Recovery Action Dispatch
+    # ----------------------------------------------------------------------------------
     dispatch_res = dispatch_action(action, transaction_record)
 
-    # 3. State Machine Transition & Attempt Counter
+    # ----------------------------------------------------------------------------------
+    # Step 3: State Machine Transition & Attempt Counter
+    # ----------------------------------------------------------------------------------
     if action == "ESCALATE_HUMAN_REVIEW":
         final_state = TransactionState.ESCALATED_HUMAN_REVIEW
-        transition_state(txn_id, final_state)
+        blob = get_state(txn_id) or {}
+        if blob.get("state") != final_state.value:
+            transition_state(txn_id, final_state)
     else:
         # Increment attempt counter
         blob = get_state(txn_id) or {}
@@ -88,7 +102,8 @@ def execute_recovery_action(
         set_state(txn_id, blob.get("state", TransactionState.DIAGNOSED.value), attempt_count=attempts)
         
         final_state = TransactionState.ACTION_SENT
-        transition_state(txn_id, final_state)
+        if blob.get("state") != final_state.value:
+            transition_state(txn_id, final_state)
 
     logger.info(f"TASK_COMPLETE: txn_id={txn_id}, action={action}, final_state={final_state.value}")
     return {
@@ -96,6 +111,7 @@ def execute_recovery_action(
         "dispatched": True,
         "state": final_state.value,
         "dispatch": dispatch_res,
+        "cmdp_state": decision.get("cmdp_state"),
         "txn_id": txn_id
     }
 

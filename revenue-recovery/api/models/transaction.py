@@ -49,6 +49,7 @@ VALID_TRANSITIONS: Dict[TransactionState, Set[TransactionState]] = {
         TransactionState.ESCALATED_HUMAN_REVIEW,
         TransactionState.STOPPED_BY_CONTACT_WINDOW,
         TransactionState.STOPPED_BY_RETRY_CAP,
+        TransactionState.STOPPED_BY_EMOTIONAL_DISTRESS,
         TransactionState.STOPPED_BY_LTV_CHURN
     },
     TransactionState.ACTION_SENT: {
