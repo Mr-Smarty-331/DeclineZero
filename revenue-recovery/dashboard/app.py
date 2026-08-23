@@ -164,7 +164,7 @@ def fetch_live_feed(limit: int = 50):
             cur.execute("""
                 SELECT 
                     seq_id,
-                    timestamp,
+                    timestamp AT TIME ZONE 'Asia/Kolkata' as timestamp,
                     transaction_id,
                     from_state,
                     to_state,
