@@ -60,5 +60,22 @@ services:
       api:
         condition: service_started
 
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: recovery_worker
+    command: celery -A workers.recovery_worker.celery_app worker --loglevel=info
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/revenue_recovery
+    volumes:
+      - .:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
 volumes:
   pgdata:
