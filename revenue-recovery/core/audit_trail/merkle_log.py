@@ -70,7 +70,6 @@ def init_audit_db():
                     chain_hash VARCHAR(64) NOT NULL,
                     timestamp TIMESTAMP WITH TIME ZONE NOT NULL
                 );
-                ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS seq_id BIGSERIAL;
                 CREATE INDEX IF NOT EXISTS idx_audit_txn ON audit_logs(transaction_id);
                 CREATE INDEX IF NOT EXISTS idx_audit_time ON audit_logs(timestamp);
                 CREATE INDEX IF NOT EXISTS idx_audit_seq ON audit_logs(seq_id);

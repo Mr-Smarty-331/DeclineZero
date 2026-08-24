@@ -49,3 +49,9 @@ pgdata/
 *.log
 scratch/
 **/scratch/
+.tempmediaStorage/
+celerybeat-schedule*
+.ipynb_checkpoints/
+*.swp
+*.swo
+*~

@@ -29,7 +29,7 @@ async def simulate_repeated_attempts(
     r_client = get_redis_client()
     responses = []
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=15.0) as client:
         for attempt in range(1, n_attempts + 1):
             # 1. Build payload ensuring exact matching IDs
             payload = transaction_to_razorpay_webhook(transaction_record, event_type="payment.failed")
@@ -54,5 +54,6 @@ async def simulate_repeated_attempts(
                     "status_code": resp.status_code,
                     "error": resp.text
                 })
+            await asyncio.sleep(0.05)
 
     return responses

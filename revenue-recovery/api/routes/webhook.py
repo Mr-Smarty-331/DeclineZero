@@ -310,6 +310,8 @@ async def handle_razorpay_webhook(body: RazorpayWebhookPayload):
             txn_id=txn_id,
             from_state="diagnosed",
             to_state=TransactionState.ESCALATED_HUMAN_REVIEW.value,
+            priority_score=p_score,
+            cate_score=cate,
             diagnosis_raw=diag_res,
             action_taken="escalated_human_review_risk_flagged",
             stopping_rule_triggered="RULE_SECURITY_RISK_SHIELD"
@@ -329,6 +331,8 @@ async def handle_razorpay_webhook(body: RazorpayWebhookPayload):
             txn_id=txn_id,
             from_state="diagnosed",
             to_state=TransactionState.AMBIGUOUS_ESCALATED.value,
+            priority_score=p_score,
+            cate_score=cate,
             diagnosis_raw=diag_res,
             action_taken="abstain_ambiguous_escalated"
         )
@@ -356,6 +360,8 @@ async def handle_razorpay_webhook(body: RazorpayWebhookPayload):
             txn_id=txn_id,
             from_state="diagnosed",
             to_state=target_state.value,
+            priority_score=p_score,
+            cate_score=cate,
             diagnosis_raw=diag_res,
             action_taken="stop",
             stopping_rule_triggered=reason
@@ -375,6 +381,18 @@ async def handle_razorpay_webhook(body: RazorpayWebhookPayload):
     cur_blob = get_state(txn_id)
     cur_att = int(cur_blob.get("attempt_count", 0)) if cur_blob else 0
     set_state(txn_id, TransactionState.ACTION_SENT, attempt_count=cur_att + 1)
+
+    action_cost = 0.50 if action in ("SEND_FRESH_PAYMENT_LINK_URGENT", "SUGGEST_ALTERNATE_METHOD", "SEND_MANDATE_REVIVAL_LINK") else 0.20
+    log_transition(
+        txn_id=txn_id,
+        from_state="diagnosed",
+        to_state=TransactionState.ACTION_SENT.value,
+        priority_score=p_score,
+        cate_score=cate,
+        diagnosis_raw=diag_res,
+        action_taken=action,
+        cost_of_action=action_cost
+    )
 
     schedule_recovery_action(
         txn_id=txn_id,

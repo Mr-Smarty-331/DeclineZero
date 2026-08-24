@@ -121,15 +121,18 @@ def execute_recovery_action(
 
     # Cryptographic Audit Log for Outreach Action (Phase 7a)
     try:
-        from core.audit_trail.merkle_log import log_transition
-        log_transition(
-            txn_id=txn_id,
-            from_state="diagnosed",
-            to_state=final_state.value,
-            action_taken=action,
-            stopping_rule_triggered=None,
-            cost_of_action=float(dispatch_res.get("cost", 0.0))
-        )
+        from core.audit_trail.merkle_log import log_transition, get_audit_history
+        hist = get_audit_history(txn_id)
+        has_action_sent = any(e.get("to_state") == final_state.value for e in hist)
+        if not has_action_sent:
+            log_transition(
+                txn_id=txn_id,
+                from_state="diagnosed",
+                to_state=final_state.value,
+                action_taken=action,
+                stopping_rule_triggered=None,
+                cost_of_action=float(dispatch_res.get("cost", 0.0))
+            )
     except Exception as e:
         logger.warning(f"AUDIT_LOG_EXCEPTION: Failed to record action dispatch audit log: {e}")
 
