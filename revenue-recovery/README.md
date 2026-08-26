@@ -199,6 +199,36 @@ docker compose exec api python tests/quick_capstone_audit.py
 
 ---
 
+## 📚 Foundational Research & Academic References
+
+Direct links to the foundational research papers and canonical texts implemented in DeclineZero's core algorithmic modules:
+
+### 1. Causal Uplift Modeling (Triage & CATE Scoring)
+- **[Causal Inference and Uplift Modelling: A Review of the Literature (Gutierrez & Gérardy, 2017)](https://proceedings.mlr.press/v67/gutierrez17a.html)**  
+  *Proceedings of Machine Learning Research (PMLR)*. Foundational review of Two-Model (T-Learner) and class transformation architectures for estimating incremental individual treatment effects.
+- **[Recursive Partitioning for Heterogeneous Causal Effects (Athey & Imbens, 2016)](https://www.pnas.org/doi/10.1073/pnas.1510489113)**  
+  *PNAS / [arXiv:1504.01132](https://arxiv.org/abs/1504.01132)*. Establishes causal trees and honest estimation to partition heterogeneous user populations by treatment responsiveness.
+
+### 2. Conformal Risk-Controlled Diagnostics (Legacy Bank Error Sets)
+- **[A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification (Angelopoulos & Bates, 2023)](https://arxiv.org/abs/2107.07511)**  
+  *arXiv:2107.07511*. Mathematical framework for generating finite-sample, distribution-free prediction sets with rigorous statistical error bounds ($\alpha = 0.01$).
+- **[Algorithmic Learning in a Random World (Vovk, Gammerman, & Shafer, 2005)](https://www.alrw.net/)**  
+  *Springer ([DOI: 10.1007/978-3-031-06649-8](https://doi.org/10.1007/978-3-031-06649-8))*. Seminal monograph introducing conformal prediction, nonconformity scoring, and hypothesis testing under exchangeability.
+
+### 3. Constrained Dynamic Dunning (CMDP & Stopping Boundaries)
+- **[Constrained Markov Decision Processes (Altman, 1999)](https://doi.org/10.1201/9781315140223)**  
+  *CRC Press / Routledge*. Canonical framework for policy optimization under hard constraints, used to enforce retry caps, budget ceilings, and customer churn penalties.
+- **[Markov Decision Processes: Discrete Stochastic Dynamic Programming (Puterman, 2014)](https://www.wiley.com/en-us/Markov+Decision+Processes%3A+Discrete+Stochastic+Dynamic+Programming-p-9780471727828)**  
+  *John Wiley & Sons*. Standard reference for dynamic programming, value iteration, and optimal stopping boundaries in stochastic systems.
+
+### 4. Cryptographic Audit Ledger (Merkle Hash Chain)
+- **[A Digital Signature Based on a Conventional Encryption Function (Merkle, 1987)](https://www.semanticscholar.org/paper/A-Digital-Signature-Based-on-a-Conventional-Merkle/5bcd990b11e068234c3a13b021f3266bb45a2964)**  
+  *Advances in Cryptology — CRYPTO '87*. Foundational paper introducing hash trees (Merkle Trees) for authenticating sequential, distributed records.
+- **[How to Time-Stamp a Digital Document (Haber & Stornetta, 1991)](https://doi.org/10.1007/BF00196791)**  
+  *Journal of Cryptology ([Nakamoto Institute Mirror](https://nakamotoinstitute.org/library/time-stamp-digital-document/))*. Establishes sequential cryptographic hash-chaining for tamper-evident, verifiable chronological logging.
+
+---
+
 ## 📜 Full Assumptions & Model Registry
 
 All model constants, heuristics, and unit economics are documented in [`ASSUMPTIONS.md`](file:///Users/ayushraj/Desktop/projects/Razorpay/revenue-recovery/ASSUMPTIONS.md).
