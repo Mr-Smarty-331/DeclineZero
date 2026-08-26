@@ -55,3 +55,9 @@ celerybeat-schedule*
 *.swp
 *.swo
 *~
+
+# Video, Media & Temporary Pitch PDFs
+*.mp4
+*.mov
+*.webm
+*.pdf
